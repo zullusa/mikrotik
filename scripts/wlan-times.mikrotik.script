@@ -49,4 +49,4 @@ if ($Wlan1Disabled=false) do {
 }
 }
 
-:log warning "WLANOnOff Script completed.";
+:log warning "WiFiOnOff Script completed.";
