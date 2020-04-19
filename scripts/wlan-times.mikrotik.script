@@ -1,0 +1,52 @@
+##################################
+## Script to On / Off WiFi access
+##################################
+
+:log warning "WiFiOnOff Script started.";
+##################################
+:local WlanOnTime;
+:local WlanOffTime;
+##################################
+## Set the WLAN ON and OFF times here
+
+:set WlanOnTime "06:00";
+:set WlanOffTime "23:59";
+
+:log warning "$WlanOnTime-$WlanOffTime";
+
+##
+##################################
+
+##################################
+## Get Current Time and WLAN1 Status
+
+:local CurrentTime [/system clock get time];
+
+## Setup log prefix
+:local LogPrefix "Wlan1 $CurrentTime";
+
+## Check current ON or OFF status of WLAN1#
+:local Wlan1Disabled [/interface wireless get wlan1 disabled]; 
+:log info "$LogPrefix Disabled = $Wlan1Disabled";
+
+##
+##################################
+
+
+## Where the ON time is set earlier than the OFF time #
+:if (($WlanOnTime < $WlanOffTime)) do {
+## WLAN should be ON between these times #
+:if ((($CurrentTime > $WlanOnTime) and ($CurrentTime < $WlanOffTime))) do {
+if ($Wlan1Disabled=true) do {
+:log warning "$LogPrefix was OFF, now switching ON.";
+/interface wireless enable wlan1;
+}
+} else {
+if ($Wlan1Disabled=false) do {
+:log warning "$LogPrefix was ON, now switching OFF.";
+/interface wireless disable wlan1;
+}
+}
+}
+
+:log warning "WLANOnOff Script completed.";
