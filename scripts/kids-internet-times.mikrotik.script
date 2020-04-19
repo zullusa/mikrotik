@@ -3,25 +3,46 @@
 ####################################
 
 :log warning "KidsInternetOnOff Script started.";
-
-################################
+####################################
+:local InternetOnTime;
+:local InternetOffTime;
+:local InternetOnTime2;
+:local InternetOffTime2;
+####################################
 ## Set the internet ON and OFF times here
 
-:local url "https://api.gimro.ru/time/get\?val";
+:local URL "https://api.gimro.ru"
+:local URLgetTIMES "$URL/time/get\?val";
+:local URLcheckNEW "$URL/time/check-new";
+:local URLapproveREADING "$URL/time/approve-reading";
+:local USEapiTIMES true;
 
-:local InternetOnTime [:tostr ([/tool fetch url="$url=MORNINGSTARTTIME" as-value output=user]->"data")];
-:local InternetOffTime [:tostr ([/tool fetch url="$url=MORNINGSTOPTIME" as-value output=user]->"data")];
+:if ($USEapiTIMES=true) do {
+:local checkNew [:tostr ([/tool fetch url="$URLcheckNEW" as-value output=user]->"data")];
+:log warning "Need check $checkNew"
+:if ($checkNew=true) do {
+:set InternetOnTime [:tostr ([/tool fetch url="$URLgetTIMES=MORNINGSTARTTIME" as-value output=user]->"data")];
+:set InternetOffTime [:tostr ([/tool fetch url="$URLgetTIMES=MORNINGSTOPTIME" as-value output=user]->"data")];
 
-:local InternetOnTime2 [:tostr ([/tool fetch url="$url=EVENINGSTARTTIME" as-value output=user]->"data")];
-:local InternetOffTime2 [:tostr ([/tool fetch url="$url=EVENINGSTOPTIME" as-value output=user]->"data")];
+:set InternetOnTime2 [:tostr ([/tool fetch url="$URLgetTIMES=EVENINGSTARTTIME" as-value output=user]->"data")];
+:set InternetOffTime2 [:tostr ([/tool fetch url="$URLgetTIMES=EVENINGSTOPTIME" as-value output=user]->"data")];
+:local approved [:tostr ([/tool fetch url="$URLapproveREADING" as-value output=user]->"data")];
+:log warning "Approved $approved";
+} else {
+:log error "Exit from script"
+:error "buy!";
+}
+}
+
+:if ($USEapiTIMES=false or ($USEapiTIMES=true and ($InternetOnTime="" or $InternetOffTime="" or $InternetOnTime2="" or $InternetOffTime2=""))) do {
+:set InternetOnTime "6:00";
+:set InternetOffTime "6:10";
+
+:set InternetOnTime2 "09:00";
+:set InternetOffTime2 "21:00";
+}
 
 :log warning "$InternetOnTime-$InternetOffTime and $InternetOnTime2-$InternetOffTime2";
-
-###:local InternetOnTime "6:00";
-###:local InternetOffTime "9:00";
-
-###:local InternetOnTime2 "17:00";
-###:local InternetOffTime2 "23:00";
 
 :local NatComment "Internet-For-Kids";
 
@@ -120,6 +141,5 @@ if ($InternetDisabled=true) do {
 }
 ##
 ##################################
-
 
 :log warning "KidsInternetOnOff Script completed.";
