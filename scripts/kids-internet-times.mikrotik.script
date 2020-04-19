@@ -1,0 +1,125 @@
+####################################
+## Script to On / Off internet access for kids
+####################################
+
+:log warning "KidsInternetOnOff Script started.";
+
+################################
+## Set the internet ON and OFF times here
+
+:local url "https://api.gimro.ru/time/get\?val";
+
+:local InternetOnTime [:tostr ([/tool fetch url="$url=MORNINGSTARTTIME" as-value output=user]->"data")];
+:local InternetOffTime [:tostr ([/tool fetch url="$url=MORNINGSTOPTIME" as-value output=user]->"data")];
+
+:local InternetOnTime2 [:tostr ([/tool fetch url="$url=EVENINGSTARTTIME" as-value output=user]->"data")];
+:local InternetOffTime2 [:tostr ([/tool fetch url="$url=EVENINGSTOPTIME" as-value output=user]->"data")];
+
+:log warning "$InternetOnTime-$InternetOffTime and $InternetOnTime2-$InternetOffTime2";
+
+###:local InternetOnTime "6:00";
+###:local InternetOffTime "9:00";
+
+###:local InternetOnTime2 "17:00";
+###:local InternetOffTime2 "23:00";
+
+:local NatComment "Internet-For-Kids";
+
+##
+#################################
+
+#################################
+## Get Current Day Of Week
+
+:local date [/system clock get date]
+
+# Math Calculation here
+:local result ""
+:local months [:toarray "jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec"]
+:local daytbl [:toarray "sun,mon,tue,wed,thu,fri,sat"]
+
+:local month [:pick $date 0 3]
+:local day [:pick $date 4 6]
+:local dayc [:pick $date 5 6]
+:local year [:pick $date 7 11]
+
+# if the first char is a 0 (zero) only read last char, else script fails
+:if ([:pick $date 4 5] = 0) do={ :set day ($dayc)}
+
+:local sum 0
+:local aaa 0
+:local yyy 0
+:local mmm 0
+:local nmonth 1
+
+:for mindex from=0 to=[:len $months] do={
+:if ([:pick $months $mindex] = $month) do={:set nmonth ($mindex + 1) }
+}
+
+:set aaa ((14 - $nmonth) / 12)
+:set yyy ($year - $aaa)
+:set mmm ($nmonth + 12 * $aaa - 2)
+:set sum (7000 + $day + $yyy + ($yyy / 4) - ($yyy / 100) + ($yyy / 400) + ((31 * $mmm) / 12))
+:set sum ($sum - (($sum / 7) * 7))
+:set result [:pick $daytbl $sum]
+#:log info "Today is $result."
+
+##
+##################################
+
+##################################
+## Get Current Time and NAT Status
+
+:local CurrentTime [/system clock get time];
+
+## Setup log prefix
+:local LogPrefix "KidsInternet $CurrentTime";
+
+## Check current ON or OFF status of Kids NAT#
+:local InternetDisabled [/ip firewall nat get [find comment=$NatComment] disabled];
+:log info "$LogPrefix Disabled = $InternetDisabled";
+
+##
+##################################
+
+##################################
+## Check Time If It Is Workday
+
+:local workday [:toarray "mon,tue,wed,thu,fri,sat,sun"]
+:if ($workday ~ $result) do={
+#:log info "Today is Workday.";
+
+## Where the ON time is set earlier than the OFF time #
+:if (($InternetOnTime < $InternetOffTime) || ($InternetOnTime2 < $InternetOffTime2)) do {
+## Internet should be ON between these times #
+:if ((($CurrentTime > $InternetOnTime) and ($CurrentTime < $InternetOffTime)) || (($CurrentTime > $InternetOnTime2) and ($CurrentTime < $InternetOffTime2))) do {
+if ($InternetDisabled=true) do {
+:log warning "$LogPrefix was OFF, now switching ON.";
+/ip firewall nat enable [find comment=$NatComment];
+}
+} else {
+if ($InternetDisabled=false) do {
+:log warning "$LogPrefix was ON, now switching OFF.";
+/ip firewall nat disable [find comment=$NatComment];
+/interface ethernet disable ether5;
+:delay 60;
+/interface ethernet enable ether5;
+}
+}
+}
+
+##################################
+## Kids Internet ON If It Is NOT Workday
+
+} else={
+:log info "Today is NOT Workday."
+if ($InternetDisabled=true) do {
+:log warning "$LogPrefix was OFF, now switching ON.";
+/ip firewall nat enable [find comment=$NatComment];
+}
+}
+##
+##################################
+
+
+:log warning "KidsInternetOnOff Script completed.";
