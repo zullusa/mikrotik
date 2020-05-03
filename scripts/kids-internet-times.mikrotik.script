@@ -124,8 +124,10 @@ if ($InternetDisabled=false) do {
 :log warning "$LogPrefix was ON, now switching OFF.";
 /ip firewall nat disable [find comment=$NatComment];
 /interface ethernet disable ether5;
+/interface wireless disable wlan1;
 :delay 60;
 /interface ethernet enable ether5;
+/interface wireless enable wlan1;
 }
 }
 }
