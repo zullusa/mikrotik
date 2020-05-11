@@ -123,9 +123,7 @@ if ($InternetDisabled=true) do {
 if ($InternetDisabled=false) do {
 :log warning "$LogPrefix was ON, now switching OFF.";
 /ip firewall nat disable [find comment=$NatComment];
-/ip firewall connection tracking set enabled=no
-:delay 5s
-/ip firewall connection tracking set enabled=auto
+:foreach i in=[/ip firewall address-list find list~"Kids-List"] do={ :foreach i in=[/ip firewall connection find src-address~"[/ip firewall address-list get $i address]" protocol~"tcp"] do={ /ip firewall connection remove $i }}
 /interface ethernet disable ether5;
 :delay 60;
 /interface ethernet enable ether5;
