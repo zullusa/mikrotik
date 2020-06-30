@@ -18,16 +18,16 @@
 ##################################
 
 ##################################
-## Get Current Time and WLAN1 Status
+## Get Current Time and WLAN2 Status
 
 :local CurrentTime [/system clock get time];
 
 ## Setup log prefix
-:local LogPrefix "Wlan1 $CurrentTime";
+:local LogPrefix "Wlan2 $CurrentTime";
 
-## Check current ON or OFF status of WLAN1#
-:local Wlan1Disabled [/interface wireless get wlan1 disabled]; 
-:log info "$LogPrefix Disabled = $Wlan1Disabled";
+## Check current ON or OFF status of WLAN2#
+:local Wlan2Disabled [/interface wireless get wlan2 disabled]; 
+:log info "$LogPrefix Disabled = $Wlan2Disabled";
 
 ##
 ##################################
@@ -37,14 +37,14 @@
 :if (($WlanOnTime < $WlanOffTime)) do {
 ## WLAN should be ON between these times #
 :if ((($CurrentTime > $WlanOnTime) and ($CurrentTime < $WlanOffTime))) do {
-if ($Wlan1Disabled=true) do {
+if ($Wlan2Disabled=true) do {
 :log warning "$LogPrefix was OFF, now switching ON.";
-/interface wireless enable wlan1;
+/interface wireless enable wlan2;
 }
 } else {
-if ($Wlan1Disabled=false) do {
+if ($Wlan2Disabled=false) do {
 :log warning "$LogPrefix was ON, now switching OFF.";
-/interface wireless disable wlan1;
+/interface wireless disable wlan2;
 }
 }
 }
